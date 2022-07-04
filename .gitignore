@@ -3,7 +3,7 @@ src/test.ipynb
 src/Data_extraction.ipynb
 src/Data_Loader.ipynb
 src/Model.ipynb
-src/SubNetwork_StaprseCoding.ipynb
+src/SubNetwork_SparseCoding.ipynb
 src/Survival_CostFunc_CIndex.ipynb
 src/Train.ipynb 
 
