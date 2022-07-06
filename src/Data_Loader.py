@@ -28,4 +28,12 @@ def load_data(data, dtype):
     YTIME = torch.from_numpy(ytime).type(dtype)
     YEVENT = torch.from_numpy(yevent).type(dtype)
     AGE = torch.from_numpy(age).type(dtype)
+    ###if gpu is being used
+    if torch.cuda.is_available():
+        X = X.cuda()
+        YTIME = YTIME.cuda()
+        YEVENT = YEVENT.cuda()
+        AGE = AGE.cuda()
+	###
     return(X, YTIME, YEVENT, AGE)
+

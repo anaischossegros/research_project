@@ -16,10 +16,18 @@ def trainCox_nnet(train_x, train_age, train_ytime, train_yevent, \
 			Learning_Rate, L2, Num_Epochs, Dropout_Rate):
 	
 	net = Cox_nnet(In_Nodes, Hidden_Nodes, Out_Nodes)
+	###if gpu is being used
+	if torch.cuda.is_available():
+		net.cuda()
+	###
 	###optimizer
 	opt = optim.Adam(net.parameters(), lr=Learning_Rate, weight_decay = L2)
 
 
+	train_loss = []
+	eval_loss = []
+	eval_cindex = []
+	train_cindex = []
 	for epoch in range(Num_Epochs+1):
 		net.train()
 		opt.zero_grad() ###reset gradients to zeros
@@ -87,17 +95,18 @@ def trainCox_nnet(train_x, train_age, train_ytime, train_yevent, \
 			###update weights in net
 			net_state_dict[name].copy_(optimal_transformed_param)
 
-		if epoch % 200 == 0: 
+		if epoch % 2 == 0: 
 			net.train()
 			train_pred = net(train_x, train_age)
-			train_loss = neg_par_log_likelihood(train_pred, train_ytime, train_yevent).view(1,)
+			train_loss.append(neg_par_log_likelihood(train_pred, train_ytime, train_yevent).view(1,))
 
 			net.eval()
 			eval_pred = net(eval_x, eval_age)
-			eval_loss = neg_par_log_likelihood(eval_pred, eval_ytime, eval_yevent).view(1,)
+			eval_loss.append(neg_par_log_likelihood(eval_pred, eval_ytime, eval_yevent).view(1,))
 
-			train_cindex = c_index(train_pred, train_ytime, train_yevent)
-			eval_cindex = c_index(eval_pred, eval_ytime, eval_yevent)
-			print("Loss in Train: ", train_loss)
+			train_cindex.append(c_index(train_pred, train_ytime, train_yevent))
+			eval_cindex.append(c_index(eval_pred, eval_ytime, eval_yevent))
+			# print("epoch", epoch, "Loss in Train: ", train_loss,"Loss in val", eval_loss)
+			# print("epoch", epoch, "C index in Train: ", train_cindex,"C index in val", eval_cindex)
 	# pred_final = net(train_x, train_age)
 	return (train_loss, eval_loss, train_cindex, eval_cindex)

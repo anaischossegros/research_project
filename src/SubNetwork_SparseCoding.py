@@ -2,17 +2,21 @@ import torch
 import numpy as np
 import math
 
-'''Construct a binary matrix to randomly drop nodes in a layer.
+def dropout_mask(n_node, drop_p):
+	'''Construct a binary matrix to randomly drop nodes in a layer.
 	Input:
 		n_node: number of nodes in the layer.
 		drop_p: the probability that a node is to be dropped.
 	Output:
 		mask: a binary matrix, where 1 --> keep the node; 0 --> drop the node.
 	'''
-def dropout_mask(n_node, drop_p):
-    keep_p = 1.0 - drop_p
-    mask = torch.Tensor(np.random.binomial(1, keep_p, size=n_node))
-    return mask
+	keep_p = 1.0 - drop_p
+	mask = torch.Tensor(np.random.binomial(1, keep_p, size=n_node))
+	###if gpu is being used
+	if torch.cuda.is_available():
+		mask = mask.cuda()
+	###
+	return mask
 
 def s_mask(sparse_level, param_matrix, nonzero_param_1D, dtype):
 	'''Construct a binary matrix w.r.t. a sparsity level of weights between two consecutive layers
@@ -34,4 +38,8 @@ def s_mask(sparse_level, param_matrix, nonzero_param_1D, dtype):
 	sorted_non_neg_param_1D, indices = torch.topk(non_neg_param_1D, top_k)
 	param_mask = torch.abs(param_matrix) > sorted_non_neg_param_1D.min()
 	param_mask = param_mask.type(dtype)
+	###if gpu is being used
+	if torch.cuda.is_available():
+		param_mask = param_mask.cuda()
+	###
 	return param_mask
