@@ -17,7 +17,6 @@ class Cox_nnet(nn.Module):
         ###if gpu is being used
         if torch.cuda.is_available():
             self.do_m1 = self.do_m1.cuda()
-            self.do_m2 = self.do_m2.cuda()
 		###
         
     def forward(self, x_1, x_2):

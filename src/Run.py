@@ -21,6 +21,24 @@ Dropout_Rate = [0.7]
 from Data_extraction import output_df2, x_df2  
 
 data = pd.concat([x_df2,output_df2],axis=1)
+
+# data = pd.concat([x_df2,output_df2],axis=1)
+
+# def split_indices(n, val_pct1, val_pct2):
+# 	n1 = int(val_pct1*n)
+# 	n2 = int(val_pct2*n)
+# 	idxs = np.random.permutation(n)
+# 	return idxs[:n1], idxs[n1:n2], idxs[n2:]
+
+# train_index, val_index, test_index = split_indices(len(data),0.6, 0.8)
+# data_train = data.iloc[train_index]
+# data_val = data.iloc[val_index]
+# data_test = data.iloc[test_index]
+
+# x_train, ytime_train, yevent_train, age_train = load_data(data_train, dtype)
+# x_valid, ytime_valid, yevent_valid, age_valid = load_data(data_val, dtype)
+# x_test, ytime_test, yevent_test, age_test = load_data(data_test,dtype)
+
 x, ytime, yevent, age = load_data(data, dtype)
 
 x_train, ytime_train, yevent_train, age_train = x[0:107], ytime[0:107], yevent[0:107], age[0:107]

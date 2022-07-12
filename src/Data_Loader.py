@@ -12,7 +12,8 @@ def sort_data(data):
     data['days_to_death']= np.where(data['days_to_death'] == "'--", data['days_to_last_follow_up'],data['days_to_death'])
     data['days_to_death']=data['days_to_death'].astype(float)
     data['age_at_diagnosis']=data['age_at_diagnosis'].astype(float)
-    data['vital_status'] = np.where((data.vital_status=='Alive') & (data.days_to_last_follow_up.astype(float)<240), 0, 1) 
+    # data['vital_status'] = np.where((data.vital_status=='Alive') & (data.days_to_last_follow_up.astype(float)<240), 0, 1) 
+    data['vital_status'] = np.where((data.vital_status=='Alive'), 0, 1) 
     data.sort_values(['days_to_death'], ascending = False, inplace = True)
     x = data.drop(['case_submitter_id','days_to_death','vital_status','age_at_diagnosis','days_to_last_follow_up'], axis = 1).values
     ytime = data.loc[:,['days_to_death']].values
@@ -37,3 +38,27 @@ def load_data(data, dtype):
 	###
     return(X, YTIME, YEVENT, AGE)
 
+class CustomDataset():
+    def __init__(self, x, y_time, y_event, age, transform=None, target_transform=None):
+        self.ytime = y_time
+        self.yevent = y_event
+        self.x = x
+        self.age = age
+        self.transform = transform
+        self.target_transform = target_transform
+
+    def __len__(self):
+        return len(self.ytime)
+
+    def __getitem__(self, idx):
+        x = self.x[idx]
+        age = self.age[idx]
+        y_time = self.ytime[idx]
+        y_event = self.yevent[idx]
+        if self.transform:
+            x = self.transform(x)
+            age = self.transform(age)
+        if self.target_transform:
+            y_time = self.target_transform(y_time)
+            y_event = self.target_transform(y_event)
+        return x, y_time, y_event, age
