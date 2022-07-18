@@ -11,6 +11,7 @@ for fp in data_path.glob('*.tsv'):
     datas_id.append(fp.name)
     data = pd.read_csv(fp, sep="\t", names = ['gene_id',	'gene_name',	'gene_type',	'unstranded',	'stranded_first',	'stranded_second',	'tpm_unstranded',	'fpkm_unstranded',	'fpkm_uq_unstranded'], usecols = [0, 8], skiprows = 6)
     datas.append(data)
+# x_df = pd.concat([df.fpkm_uq_unstranded for df in datas], axis=1)
 x_df = pd.concat([df.fpkm_uq_unstranded for df in datas], axis=1)
 x_df.columns = [f"case_{i}_copy_number" for i in range(len(datas))]
 
@@ -50,19 +51,6 @@ for m in datas_id:
     if m not in file_name: 
         missing.append(m)
 
-# #we make the new data base without the missing output
-# datas = []
-# datas_id2 = []
-# for fp in data_path.glob('*.tsv'):
-#     file_path = fp
-#     if fp.name not in missing: 
-#         data = pd.read_csv(fp, sep="/t", names = ['gene_id',	'gene_name',	'gene_type',	'unstranded',	'stranded_first',	'stranded_second',	'tpm_unstranded',	'fpkm_unstranded',	'fpkm_uq_unstranded'], usecols = [0, 8], skiprows = 6)
-#         datas.append(data)
-#         datas_id2.append(fp.name)
-# x_df = pd.concat([df.fpkm_uq_unstranded for df in datas], axis=1)
-
-
-
 #remove all the rows where all the genes are equal
 
 #keep = one columns of booleens, true if all the genes are equals between the cases
@@ -82,15 +70,20 @@ x_df2 = x_df2.assign(filename=datas_id)
 
 output_df2 = output_df.transpose()
 x_df2= x_df2.set_index(['filename'])
+
+#remove cases without outputs
 x_df2 = x_df2.drop(missing, axis = 0)
 output_df2= output_df2.set_index(['filename'])
 x_df2.to_csv('x_df2.csv')
 output_df2.to_csv('output_df2.csv')
-
 
 #let's transform input and output into array
 x = x_df.to_numpy()
 output = output_df.to_numpy()
 output = output[1:3]
 
+data_norm_path = Path("C:/Users/anais/Documents/2-Imperial/0-Research-Project/4-NN/Cox-nnet model/normalized_count")
+data_norm_df = pd.read_csv(data_norm_path, sep="\t")
+data_norm_df = data_norm_df.transpose()
+data_norm_df = data_norm_df.drop('Unnamed: 0', axis = 0)
 

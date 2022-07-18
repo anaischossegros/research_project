@@ -6,8 +6,11 @@ src/Model.ipynb
 src/SubNetwork_SparseCoding.ipynb
 src/Survival_CostFunc_CIndex.ipynb
 src/Train.ipynb 
-output_df2.csv 
-x_df2.csv
+src/x_df2.csv
+src/x_dfraw.csv
+src/output_df2.csv
+src/output_dfnorm.csv
+
 
 
 
