@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 dtype = torch.FloatTensor
 
+
 def trainCox_nnet(train_x, train_age, train_ytime, train_yevent, \
 			eval_x, eval_age, eval_ytime, eval_yevent, \
 			In_Nodes, Hidden_Nodes, Out_Nodes, \

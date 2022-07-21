@@ -1,4 +1,5 @@
 data/*
+data_lung/*
 src/test.ipynb
 src/Data_extraction.ipynb
 src/Data_Loader.ipynb

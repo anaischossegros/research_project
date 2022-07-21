@@ -7,6 +7,9 @@ class Cox_nnet(nn.Module):
     def __init__(self, In_Nodes, Hidden_Nodes, Out_Nodes, Dropout):
         super(Cox_nnet, self).__init__()
         self.tanh = nn.Tanh()
+        #for resnet
+        self.shortcut = nn.Linear(In_Nodes, Out_Nodes)
+        self.sc0_norm = nn.BatchNorm1d(In_Nodes)
 		# gene layer --> hidden layer
         self.sc1 = nn.Linear(In_Nodes, Hidden_Nodes)
         self.sc1_norm = nn.BatchNorm1d(Hidden_Nodes)
@@ -21,8 +24,11 @@ class Cox_nnet(nn.Module):
 
         
     def forward(self, x_1, x_2):
+        # shortcut = (self.sc2_norm(self.shortcut(x_1)))
+        # x_1 = self.tanh(self.sc1_do(self.sc1_norm(self.sc1(self.tanh(self.sc0_norm(x_1))))))
+        # x_1 =(self.sc2(x_1)) + shortcut
         x_1 = self.tanh(self.sc1_do(self.sc1_norm(self.sc1(x_1))))
-        x_1 =self.tanh(self.sc2_do(self.sc2_norm(self.sc2(x_1))))
+        x_1 = self.tanh(self.sc2_do(self.sc2_norm(self.sc2(x_1))))
 		# combine age with hidden layer 
         x_cat = torch.cat((x_1, x_2), 1)
         lin_pred = self.sc3(x_cat)
