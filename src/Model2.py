@@ -3,18 +3,23 @@ import torch.nn as nn
 from Survival_CostFunc_CIndex import R_set, neg_par_log_likelihood, c_index
 
 
+
 class Cox_nnet(nn.Module):
-    def __init__(self, In_Nodes, Hidden_Nodes, Out_Nodes, Dropout):
+    def __init__(self, In_Nodes, Hidden_Nodes, Out_Nodes, Dropout): 
         super(Cox_nnet, self).__init__()
         self.tanh = nn.Tanh()
         #for resnet
         self.shortcut = nn.Linear(In_Nodes, Out_Nodes)
         self.sc0_norm = nn.BatchNorm1d(In_Nodes)
-		# gene layer --> hidden layer
+		# gene layer --> hidden layer 1
         self.sc1 = nn.Linear(In_Nodes, Hidden_Nodes)
         self.sc1_norm = nn.BatchNorm1d(Hidden_Nodes)
         self.sc1_do = nn.Dropout(Dropout) 
-		# hidden layer --> hidden layer 2
+        #hiddenlayer 1 --> hidden layer 2 convolutional
+        self.conv1= nn.Conv1d(in_channels=1, out_channels=Hidden_Nodes, kernel_size=3, stride=1, padding =1)
+        self.max_pool1 = nn.MaxPool1d(2)
+        self.flatten = nn.Flatten()
+        #hiddenlayer 2 --> hidden layer 3 linear
         self.sc2 = nn.Linear(Hidden_Nodes, Out_Nodes, bias=False)
         self.sc2_do = nn.Dropout(Dropout) 
         self.sc2_norm = nn.BatchNorm1d(Out_Nodes)
@@ -24,11 +29,16 @@ class Cox_nnet(nn.Module):
 
         
     def forward(self, x_1, x_2):
+        #ResNet
         # shortcut = (self.sc2_norm(self.shortcut(x_1)))
         # x_1 = self.tanh(self.sc1_do(self.sc1_norm(self.sc1(self.tanh(self.sc0_norm(x_1))))))
-        # x_1 =(self.sc2(x_1)) + shortcut
+        # x_1 =(self.sc2((x_1))) + shortcut
+        #Normal
         x_1 = self.tanh(self.sc1_do(self.sc1_norm(self.sc1(x_1))))
         x_1 = self.tanh(self.sc2_do(self.sc2_norm(self.sc2(x_1))))
+        #With convolution
+        # x_1 = self.tanh(self.sc1_do(self.sc1_norm(self.sc1(x_1))))
+        # x_1 = self.tanh(self.sc2_do(self.sc2_norm(self.sc2(self.flatten(self.max_pool1(self.tanh(self.conv1(x_1))))))))
 		# combine age with hidden layer 
         x_cat = torch.cat((x_1, x_2), 1)
         lin_pred = self.sc3(x_cat)
@@ -36,7 +46,8 @@ class Cox_nnet(nn.Module):
 
     def training_step(self, batch): 
         x_train_b, ytime_train_b, yevent_train_b, age_train_b = batch
-        pred = self(x_train_b, age_train_b) ###Forward
+        # print(batch)
+        pred = self(x_train_b.float(), age_train_b) ###Forward
         loss = neg_par_log_likelihood(pred, ytime_train_b, yevent_train_b) ###calculate loss
         acc = c_index(pred, ytime_train_b, yevent_train_b) #calculate accuracy
         return{'val_loss': loss, 'val_acc': acc}
@@ -50,7 +61,7 @@ class Cox_nnet(nn.Module):
 
     def validation_step(self, batch): 
         x_eval_b, ytime_eval_b, yevent_eval_b, age_eval_b = batch
-        eval_pred = self(x_eval_b, age_eval_b)
+        eval_pred = self(x_eval_b.float(), age_eval_b)
         loss = neg_par_log_likelihood(eval_pred, ytime_eval_b, yevent_eval_b)
         acc = c_index(eval_pred, ytime_eval_b, yevent_eval_b)
         return{'val_loss': loss, 'val_acc': acc}
