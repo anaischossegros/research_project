@@ -17,8 +17,9 @@ from torch.utils.data.dataloader import DataLoader
 dtype = torch.FloatTensor
 
 def reset_weights(m):
-    if isinstance(m, nn.Linear):
-        m.reset_parameters()
+	for layer in m.children():
+		if hasattr(layer, 'reset_parameters'):
+			layer.reset_parameters()
 
 def trainCox_nnet(data2, \
 			In_Nodes, Hidden_Nodes, Out_Nodes, \
@@ -51,6 +52,7 @@ def trainCox_nnet(data2, \
 			history_val[fold].append(result_val)
 			history_train[fold].append(result_train)
 			# pred_final = net(train_x, train_age)
+		# net.apply(reset_weights)
 	return (history_train, history_val)
 
 # def trainCox_nnet(train_loader, \

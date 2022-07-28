@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 
 def R_set(x):
 	n_sample = x.size(0)
