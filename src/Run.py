@@ -18,13 +18,14 @@ Out_Nodes = 30 ###number of hidden nodes in the last hidden layer
 ''' Initialize '''
 Initial_Learning_Rate = [0.03, 0.01, 0.001, 0.00075]
 L2_Lambda = [0.1, 0.01, 0.005, 0.001]
+L1_lambda= [0.1, 0.01, 0.005, 0.001]
 num_epochs = 3 ###for grid search
 Num_EPOCHS = 8 ###for training
 Dropout_Rate = [0.7, 0.5]
 
-from Data_extraction import data_norm_df, output_df2
-data_norm_df= data_norm_df.reset_index(drop=True)
-output_df2 = output_df2.reset_index(drop=True)
+from Data_extraction_lung import data_norm_df_lung, output_df_lung
+data_norm_df= data_norm_df_lung.reset_index(drop=True)
+output_df2 = output_df_lung.reset_index(drop=True)
 
 
 data = pd.concat([data_norm_df,output_df2], axis=1)
@@ -62,21 +63,22 @@ opt_c_index_tr = 0
 
 for l2 in L2_Lambda:
 	for lr in Initial_Learning_Rate:
-		for do in Dropout_Rate:
-			history_train, history_val = trainCox_nnet(data2, \
-				In_Nodes, Hidden_Nodes, Out_Nodes, \
-				lr, l2, num_epochs, do, batch_size)
-			loss_train2 = [k['loss'] for k in history_train[1]]
-			if loss_train2[-1] =='nan': 
-				break
-			elif loss_train2[-1] < opt_loss:
-				opt_l2_loss = l2
-				opt_lr_loss = lr
-				opt_do_loss = do
-				opt_loss = loss_train2[-1]
-				# opt_c_index_tr = c_index_tr
-				# opt_c_index_va = c_index_va
-			print ("L2: ", l2, "LR: ", lr, "Loss in Validation: ", opt_loss)
+		for l1 in L1_lambda: 
+			for do in Dropout_Rate:
+				history_train, history_val = trainCox_nnet(data2, \
+					In_Nodes, Hidden_Nodes, Out_Nodes, \
+					lr, l2, l1, num_epochs, do, batch_size)
+				loss_train2 = [k['loss'] for k in history_train[1]]
+				if loss_train2[-1] =='nan': 
+					break
+				elif loss_train2[-1] < opt_loss:
+					opt_l2_loss = l2
+					opt_lr_loss = lr
+					opt_do_loss = do
+					opt_loss = loss_train2[-1]
+					# opt_c_index_tr = c_index_tr
+					# opt_c_index_va = c_index_va
+				print ("L2: ", l2, "LR: ", lr, "Loss in Validation: ", opt_loss)
 
 ###train Cox-PASNet with optimal hyperparameters using train data, and then evaluate the trained model with test data
 ###Note that test data are only used to evaluate the trained Cox-nnet
