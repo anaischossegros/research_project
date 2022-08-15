@@ -23,11 +23,12 @@ def reset_weights(m):
 
 def trainCox_nnet(data2, \
 			In_Nodes, Hidden_Nodes, Out_Nodes, \
-			Learning_Rate, L2, Num_Epochs, Dropout_Rate, batch_size):
+			Learning_Rate, L2, l1_lambda, Num_Epochs, Dropout_Rate, batch_size):
 	k_folds = 5
 	kfold = KFold(n_splits=k_folds, shuffle=True)
-	history_val=[[],[],[],[],[]]
-	history_train=[[],[],[],[],[]]
+	history_val=[[],[],[],[],[],[],[],[],[],[]]
+	history_train=[[],[],[],[],[],[],[],[],[],[]]
+	loss_batch_train = [[],[],[],[],[]]
 	for fold,(train_idx,test_idx) in enumerate(kfold.split(data2)):
 		net = Cox_nnet(In_Nodes, Hidden_Nodes, Out_Nodes, Dropout_Rate)
 		opt = optim.Adam(net.parameters(), lr=Learning_Rate, weight_decay = L2)
@@ -41,6 +42,11 @@ def trainCox_nnet(data2, \
 			for batch in train_loader: 
 				loss = net.training_step(batch)
 				loss = loss['val_loss']
+				regularization_loss = 0
+				for param in net.parameters():
+					regularization_loss += torch.sum(abs(param))
+				loss = loss+l1_lambda*regularization_loss
+				loss_batch_train.append(loss)
 				loss.backward() ###calculate gradients
 				opt.step() ###update weights and biases
 				opt.zero_grad() ###reset gradients to zeros
@@ -53,7 +59,7 @@ def trainCox_nnet(data2, \
 			history_train[fold].append(result_train)
 			# pred_final = net(train_x, train_age)
 		# net.apply(reset_weights)
-	return (history_train, history_val)
+	return (loss_batch_train,history_train, history_val)
 
 # def trainCox_nnet(train_loader, \
 # 			val_loader, \

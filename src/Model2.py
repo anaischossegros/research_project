@@ -8,11 +8,12 @@ class Cox_nnet(nn.Module):
     def __init__(self, In_Nodes, Hidden_Nodes, Out_Nodes, Dropout): 
         super(Cox_nnet, self).__init__()
         
-        #for resnet
+        # #for resnet
         # self.shortcut = nn.Linear(In_Nodes, Out_Nodes)
-        # self.shortcut2 = nn.Linear(Hidden_Nodes, Out_Nodes)
+        # # self.shortcut2 = nn.Linear(Hidden_Nodes, Out_Nodes)
         # self.sc0_norm = nn.BatchNorm1d(In_Nodes)
-		# gene layer --> hidden layer 1
+
+		# # gene layer --> hidden layer 1
         self.sc1 = nn.Linear(In_Nodes, Hidden_Nodes)
         self.sc1_norm = nn.BatchNorm1d(Hidden_Nodes)
         self.sc1_do = nn.Dropout(Dropout) 
@@ -22,6 +23,7 @@ class Cox_nnet(nn.Module):
         # self.conv1= nn.Conv1d(in_channels=1, out_channels=Hidden_Nodes, kernel_size=3, stride=1, padding =1)
         # self.max_pool1 = nn.MaxPool1d(2)
         # self.flatten = nn.Flatten()
+
         #hiddenlayer 2 --> hidden layer 3 linear
         self.sc2 = nn.Linear(Hidden_Nodes, Out_Nodes)
         self.sc2_norm = nn.BatchNorm1d(Out_Nodes)
@@ -43,7 +45,7 @@ class Cox_nnet(nn.Module):
         #ResNet
         # shortcut1 = (self.sc2_norm(self.shortcut(x_1)))
         # x_1 = self.tanh(self.sc1_do(self.sc1_norm(self.sc1(self.tanh(self.sc0_norm(x_1))))))
-        # shortcut2 = self.sc3_norm(self.shortcut2(x_1))
+        # # shortcut2 = self.sc3_norm(self.shortcut2(x_1))
         # x_1 =(self.sc2((x_1))) + shortcut1
         # x_1 = self.sc3(self.tanh(self.sc2_norm(x_1)))
         # x_1 = (x_1) + shortcut2

@@ -10,6 +10,7 @@ import torch
 def sort_data(data): 
     # data['days_to_last_follow_up']=np.where(data['days_to_last_follow_up']=="'--", 1000, data['days_to_last_follow_up'])
     data['days_to_death']= np.where(data['days_to_death'] == "'--", data['days_to_last_follow_up'],data['days_to_death'])
+    # data['days_to_death']= np.where(data['days_to_death'] == "'--", 0,data['days_to_death'])
     data['days_to_death']=data['days_to_death'].astype(float)
     data['age_at_diagnosis']=data['age_at_diagnosis'].astype(float)
     # data['vital_status'] = np.where((data.vital_status=='Alive') & (data.days_to_last_follow_up.astype(float)<706), 0, 1) 
