@@ -8,106 +8,91 @@ import copy
 from scipy.interpolate import interp1d
 import numpy as np
 import pandas as pd
+import torch.nn as nn
+from sklearn.model_selection import KFold
+from torch.utils.data.dataloader import DataLoader
+
+
+
 dtype = torch.FloatTensor
 
+def reset_weights(m):
+	for layer in m.children():
+		if hasattr(layer, 'reset_parameters'):
+			layer.reset_parameters()
 
-def trainCox_nnet(train_x, train_age, train_ytime, train_yevent, \
-			eval_x, eval_age, eval_ytime, eval_yevent, \
+def trainCox_nnet(data2, \
 			In_Nodes, Hidden_Nodes, Out_Nodes, \
-			Learning_Rate, L2, Num_Epochs, Dropout_Rate):
+			Learning_Rate, L2, l1_lambda, Num_Epochs, Dropout_Rate, batch_size):
+	k_folds = 5
+	kfold = KFold(n_splits=k_folds, shuffle=True)
+	history_val=[[],[],[],[],[],[],[],[],[],[]]
+	history_train=[[],[],[],[],[],[],[],[],[],[]]
+	loss_batch_train = [[],[],[],[],[]]
+	for fold,(train_idx,test_idx) in enumerate(kfold.split(data2)):
+		net = Cox_nnet(In_Nodes, Hidden_Nodes, Out_Nodes, Dropout_Rate)
+		opt = optim.Adam(net.parameters(), lr=Learning_Rate, weight_decay = L2)
+		print('------------fold no---------{}----------------------'.format(fold))
+		train_loader = DataLoader(data2, batch_size=batch_size, sampler=train_idx)
+		val_loader = DataLoader(data2, batch_size=batch_size, sampler=test_idx)
+		# print(train_idx)
+		for epoch in range(Num_Epochs+1):
+			#training phase
+			pred_train=[]
+			for batch in train_loader: 
+				loss = net.training_step(batch)
+				loss = loss['val_loss']
+				regularization_loss = 0
+				for param in net.parameters():
+					regularization_loss += torch.sum(abs(param))
+				loss = loss+l1_lambda*regularization_loss
+				loss_batch_train.append(loss)
+				loss.backward() ###calculate gradients
+				opt.step() ###update weights and biases
+				opt.zero_grad() ###reset gradients to zeros
+				pred_train.append(net.training_step(batch))
+			result_train = net.training_epoch_end(pred_train)
+			pred_val = 	[net.validation_step(batch) for batch in val_loader]
+			result_val = net.validation_epoch_end(pred_val)
+			net.epoch_end(epoch, result_val)
+			history_val[fold].append(result_val)
+			history_train[fold].append(result_train)
+			# pred_final = net(train_x, train_age)
+		# net.apply(reset_weights)
+	return (loss_batch_train,history_train, history_val)
+
+# def trainCox_nnet(train_loader, \
+# 			val_loader, \
+# 			In_Nodes, Hidden_Nodes, Out_Nodes, \
+# 			Learning_Rate, L2, Num_Epochs, Dropout_Rate):
 	
-	net = Cox_nnet(In_Nodes, Hidden_Nodes, Out_Nodes)
-	###if gpu is being used
-	if torch.cuda.is_available():
-		net.cuda()
-	###
-	###optimizer
-	opt = optim.Adam(net.parameters(), lr=Learning_Rate, weight_decay = L2)
-
-
-	train_loss = []
-	eval_loss = []
-	eval_cindex = []
-	train_cindex = []
-	for epoch in range(Num_Epochs+1):
-		net.train()
-		opt.zero_grad() ###reset gradients to zeros
-		###Randomize dropout masks
-		net.do_m1 = dropout_mask(Hidden_Nodes, Dropout_Rate[0])
-
-		pred = net(train_x, train_age) ###Forward
-		loss = neg_par_log_likelihood(pred, train_ytime, train_yevent) ###calculate loss
-		loss.backward() ###calculate gradients
-		opt.step() ###update weights and biases
-
-		###obtain the small sub-network's connections
-		do_m1_grad = copy.deepcopy(net.sc2.weight._grad.data)
-		do_m1_grad_mask = torch.where(do_m1_grad == 0, do_m1_grad, torch.ones_like(do_m1_grad))
-		###copy the weights
-		net_sc2_weight = copy.deepcopy(net.sc2.weight.data)
-
-		###serializing net 
-		net_state_dict = net.state_dict()
-
-		# ###Sparse Coding
-		# ###make a copy for net, and then optimize sparsity level via copied net
-		copy_net = copy.deepcopy(net)
-		copy_state_dict = copy_net.state_dict()
-		for name, param in copy_state_dict.items():
-			###omit the param if it is not a weight matrix
-			if not "weight" in name:
-				continue
-			###omit gene layer
-			if "sc1" in name:
-				continue
-			###stop sparse coding
-			if "sc3" in name:
-				break
-			###sparse coding between the current two consecutive layers is in the trained small sub-network
-			if "sc2" in name:
-				active_param = net_sc2_weight.mul(do_m1_grad_mask)
-			nonzero_param_1d = active_param[active_param != 0]
-			if nonzero_param_1d.size(0) == 0: ###stop sparse coding between the current two consecutive layers if there are no valid weights
-				break
-			copy_param_1d = copy.deepcopy(nonzero_param_1d)
-			###set up potential sparsity level in [0, 100)
-			S_set =  torch.arange(100, -1, -1)[1:]
-			copy_param = copy.deepcopy(active_param)
-			S_loss = []
-			for S in S_set:
-				param_mask = s_mask(sparse_level = S.item(), param_matrix = copy_param, nonzero_param_1D = copy_param_1d, dtype = dtype)
-				transformed_param = copy_param.mul(param_mask)
-				copy_state_dict[name].copy_(transformed_param)
-				copy_net.train()
-				y_tmp = copy_net(train_x, train_age)
-				loss_tmp = neg_par_log_likelihood(y_tmp, train_ytime, train_yevent)
-				S_loss.append(loss_tmp.detach().numpy()[0])
-			###apply cubic interpolation
-			interp_S_loss = interp1d(S_set.detach().numpy(),S_loss, kind='cubic')
-			interp_S_set = torch.linspace(min(S_set), max(S_set), steps=100)
-			interp_loss = interp_S_loss(interp_S_set)
-			optimal_S = interp_S_set[np.argmin(interp_loss)]
-			optimal_param_mask = s_mask(sparse_level = optimal_S.item(), param_matrix = copy_param, nonzero_param_1D = copy_param_1d, dtype = dtype)
-			if "sc2" in name:
-				final_optimal_param_mask = torch.where(do_m1_grad_mask == 0, torch.ones_like(do_m1_grad_mask), optimal_param_mask)
-				optimal_transformed_param = net_sc2_weight.mul(final_optimal_param_mask)
-			###update weights in copied net
-			copy_state_dict[name].copy_(optimal_transformed_param)
-			###update weights in net
-			net_state_dict[name].copy_(optimal_transformed_param)
-
-		if epoch % 2 == 0: 
-			net.train()
-			train_pred = net(train_x, train_age)
-			train_loss.append(neg_par_log_likelihood(train_pred, train_ytime, train_yevent).view(1,))
-
-			net.eval()
-			eval_pred = net(eval_x, eval_age)
-			eval_loss.append(neg_par_log_likelihood(eval_pred, eval_ytime, eval_yevent).view(1,))
-
-			train_cindex.append(c_index(train_pred, train_ytime, train_yevent))
-			eval_cindex.append(c_index(eval_pred, eval_ytime, eval_yevent))
-			# print("epoch", epoch, "Loss in Train: ", train_loss,"Loss in val", eval_loss)
-			# print("epoch", epoch, "C index in Train: ", train_cindex,"C index in val", eval_cindex)
-	# pred_final = net(train_x, train_age)
-	return (train_loss, eval_loss, train_cindex, eval_cindex)
+# 	net = Cox_nnet(In_Nodes, Hidden_Nodes, Out_Nodes, Dropout_Rate)
+# 	###if gpu is being used
+# 	if torch.cuda.is_available():
+# 		net.cuda()
+# 	###
+# 	###optimizer
+# 	# opt = torch.optim.SGD(net.parameters(), lr=Learning_Rate, weight_decay = L2, momentum= 0.9)
+# 	opt = optim.Adam(net.parameters(), lr=Learning_Rate, weight_decay = L2)
+# 	history_val=[]
+# 	history_train=[]
+# 	for epoch in range(Num_Epochs+1):
+# 		#training phase
+# 		pred_train=[]
+# 		for batch in train_loader:  
+# 			loss = net.training_step(batch)
+# 			loss = loss['val_loss']
+# 			loss.backward() ###calculate gradients
+# 			opt.step() ###update weights and biases
+# 			opt.zero_grad() ###reset gradients to zeros
+# 			pred_train.append(net.training_step(batch))
+# 		result_train = net.training_epoch_end(pred_train)
+# 		pred_val = 	[net.validation_step(batch) for batch in val_loader]
+# 		result_val = net.validation_epoch_end(pred_val)
+# 		net.epoch_end(epoch, result_val)
+# 		history_val.append(result_val)
+# 		history_train.append(result_train)
+# 		# print("epoch", epoch, "Loss in Train: ", train_loss,"Loss in val", eval_loss)
+# 		# print("epoch", epoch, "C index in Train: ", train_cindex,"C index in val", eval_cindex)
+# 	# pred_final = net(train_x, train_age)
+# 	return (history_train, history_val)

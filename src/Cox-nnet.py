@@ -1,5 +1,5 @@
 from Data_Loader import load_data
-from Train2 import trainCox_nnet
+from Train import trainCox_nnet
 
 import torch
 import numpy as np
@@ -80,7 +80,7 @@ for l2 in L2_Lambda:
 					# opt_c_index_va = c_index_va
 				print ("L2: ", l2, "LR: ", lr, "Loss in Validation: ", opt_loss)
 
-###train Cox-PASNet with optimal hyperparameters using train data, and then evaluate the trained model with test data
+###train Cox-nnet with optimal hyperparameters using train data, and then evaluate the trained model with test data
 ###Note that test data are only used to evaluate the trained Cox-nnet
 history_train, history_val = trainCox_nnet(data2, \
 			In_Nodes, Hidden_Nodes, Out_Nodes, \
