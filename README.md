@@ -1,4 +1,4 @@
-# Unsupervised Learning of Clinical Scales
+# Models comparison for survival analysis
 
 Author: Anaïs Chossegros
 
