@@ -2,18 +2,21 @@ import numpy as np
 import pandas as pd
 import torch
 
-#extract the data from data extraction
-# from Data_extraction import output_df2, x_df2 
-# data=pd.concat([x_df2,output_df2],axis=1)
+
 
 #sort the data 
 def sort_data(data): 
-    # data['days_to_last_follow_up']=np.where(data['days_to_last_follow_up']=="'--", 1000, data['days_to_last_follow_up'])
+    """_summary_
+
+    Args:
+        data(data frame): data frame with inputs and outputs
+
+    Returns:
+        list: list of the sorted data by survival time
+    """
     data['days_to_death']= np.where(data['days_to_death'] == "'--", data['days_to_last_follow_up'],data['days_to_death'])
-    # data['days_to_death']= np.where(data['days_to_death'] == "'--", 0,data['days_to_death'])
     data['days_to_death']=data['days_to_death'].astype(float)
     data['age_at_diagnosis']=data['age_at_diagnosis'].astype(float)
-    # data['vital_status'] = np.where((data.vital_status=='Alive') & (data.days_to_last_follow_up.astype(float)<706), 0, 1) 
     data['vital_status'] = np.where((data.vital_status=='Alive'), 0, 1) 
     data.sort_values(['days_to_death'], ascending = False, inplace = True)
     x = data.drop(['case_submitter_id','days_to_death','vital_status','age_at_diagnosis','days_to_last_follow_up'], axis = 1).values
@@ -39,6 +42,7 @@ def load_data(data, dtype):
 	###
     return(X, YTIME, YEVENT, AGE)
 
+#make a class with the data
 class CustomDataset():
     def __init__(self, x, y_time, y_event, age, transform=None, target_transform=None):
         self.ytime = y_time

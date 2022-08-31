@@ -1,5 +1,4 @@
 from Model import Cox_nnet
-from SubNetwork_SparseCoding import dropout_mask, s_mask
 from Survival_CostFunc_CIndex import R_set, neg_par_log_likelihood, c_index
 
 import torch
@@ -24,6 +23,20 @@ def reset_weights(m):
 def trainCox_nnet(data2, \
 			In_Nodes, Hidden_Nodes, Out_Nodes, \
 			Learning_Rate, L2, l1_lambda, Num_Epochs, Dropout_Rate, batch_size):
+	"""train the model
+
+	Args:
+		data2 (class): from the class Custom Data set
+		Hidden_Nodes (int)
+		Out_Nodes (int)
+		L2 (float)
+		l1_lambda (float)
+		Num_Epochs (int)
+		Dropout_Rate (float)
+		batch_size (int)
+	Returns:
+		list: list of the loss and the accuracy for every epoch and every fold
+	"""
 	k_folds = 5
 	kfold = KFold(n_splits=k_folds, shuffle=True)
 	history_val=[[],[],[],[],[],[],[],[],[],[]]
@@ -35,7 +48,6 @@ def trainCox_nnet(data2, \
 		print('------------fold no---------{}----------------------'.format(fold))
 		train_loader = DataLoader(data2, batch_size=batch_size, sampler=train_idx)
 		val_loader = DataLoader(data2, batch_size=batch_size, sampler=test_idx)
-		# print(train_idx)
 		for epoch in range(Num_Epochs+1):
 			#training phase
 			pred_train=[]
@@ -57,42 +69,6 @@ def trainCox_nnet(data2, \
 			net.epoch_end(epoch, result_val)
 			history_val[fold].append(result_val)
 			history_train[fold].append(result_train)
-			# pred_final = net(train_x, train_age)
-		# net.apply(reset_weights)
-	return (loss_batch_train,history_train, history_val)
+		net.apply(reset_weights)
+	return (history_train, history_val)
 
-# def trainCox_nnet(train_loader, \
-# 			val_loader, \
-# 			In_Nodes, Hidden_Nodes, Out_Nodes, \
-# 			Learning_Rate, L2, Num_Epochs, Dropout_Rate):
-	
-# 	net = Cox_nnet(In_Nodes, Hidden_Nodes, Out_Nodes, Dropout_Rate)
-# 	###if gpu is being used
-# 	if torch.cuda.is_available():
-# 		net.cuda()
-# 	###
-# 	###optimizer
-# 	# opt = torch.optim.SGD(net.parameters(), lr=Learning_Rate, weight_decay = L2, momentum= 0.9)
-# 	opt = optim.Adam(net.parameters(), lr=Learning_Rate, weight_decay = L2)
-# 	history_val=[]
-# 	history_train=[]
-# 	for epoch in range(Num_Epochs+1):
-# 		#training phase
-# 		pred_train=[]
-# 		for batch in train_loader:  
-# 			loss = net.training_step(batch)
-# 			loss = loss['val_loss']
-# 			loss.backward() ###calculate gradients
-# 			opt.step() ###update weights and biases
-# 			opt.zero_grad() ###reset gradients to zeros
-# 			pred_train.append(net.training_step(batch))
-# 		result_train = net.training_epoch_end(pred_train)
-# 		pred_val = 	[net.validation_step(batch) for batch in val_loader]
-# 		result_val = net.validation_epoch_end(pred_val)
-# 		net.epoch_end(epoch, result_val)
-# 		history_val.append(result_val)
-# 		history_train.append(result_train)
-# 		# print("epoch", epoch, "Loss in Train: ", train_loss,"Loss in val", eval_loss)
-# 		# print("epoch", epoch, "C index in Train: ", train_cindex,"C index in val", eval_cindex)
-# 	# pred_final = net(train_x, train_age)
-# 	return (history_train, history_val)

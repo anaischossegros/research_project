@@ -33,11 +33,9 @@ def c_index(pred, ytime, yevent):
 	n_sample = len(ytime)
 	ytime_indicator = R_set(ytime)
 	ytime_matrix = ytime_indicator - torch.diag(torch.diag(ytime_indicator))
-	###T_i is uncensored
 	censor_idx = (yevent == 0).nonzero()
 	zeros = torch.zeros(n_sample)
 	ytime_matrix[censor_idx, :] = zeros
-	###1 if pred_i < pred_j; 0.5 if pred_i = pred_j
 	pred_matrix = torch.zeros_like(ytime_matrix)
 	for j in range(n_sample):
 		for i in range(n_sample):
