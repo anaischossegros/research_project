@@ -12,7 +12,7 @@ def sort_data(data):
         data(data frame): data frame with inputs and outputs
 
     Returns:
-        list: list of the sorted data by survival time
+        list: list of the sorted data by survival time: gene expression, survival time, censoring index, age
     """
     data['days_to_death']= np.where(data['days_to_death'] == "'--", data['days_to_last_follow_up'],data['days_to_death'])
     data['days_to_death']=data['days_to_death'].astype(float)

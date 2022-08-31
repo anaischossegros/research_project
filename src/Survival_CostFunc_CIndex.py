@@ -30,6 +30,13 @@ def neg_par_log_likelihood(pred, ytime, yevent):
 	return(cost)
 
 def c_index(pred, ytime, yevent):
+	"""Calculate the c_index for the Cox-nnet model
+	pred: linear predictors from trained model.
+		ytime: true survival time from load_data().
+		yevent: true censoring status from load_data().
+	Output:
+		c-index: measures the accuracy of the model
+	"""
 	n_sample = len(ytime)
 	ytime_indicator = R_set(ytime)
 	ytime_matrix = ytime_indicator - torch.diag(torch.diag(ytime_indicator))

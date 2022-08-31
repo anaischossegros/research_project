@@ -14,7 +14,6 @@ class Cox_nnet(nn.Module):
         self.sc1_do = nn.Dropout(Dropout) 
         self.tanh = nn.ReLU()
 
-
         #hiddenlayer 2 --> hidden layer 3 linear
         self.sc2 = nn.Linear(Hidden_Nodes, Out_Nodes)
         self.sc2_norm = nn.BatchNorm1d(Out_Nodes)
@@ -32,7 +31,6 @@ class Cox_nnet(nn.Module):
 
         
     def forward(self, x_1, x_2):
-
 
         #Normal
         x_1 = self.tanh(self.sc1_do(self.sc1_norm(self.sc1(x_1))))

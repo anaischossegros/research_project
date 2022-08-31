@@ -1,0 +1,24 @@
+# Name                    Version                   Build  Channel
+
+bioinfokit                1.0.8              pyh3252c3a_0    bioconda
+conda                     4.13.0           py39hcbf5309_1    conda-forge
+jovian                    0.2.41                   pypi_0    pypi
+jupyterlab                3.4.4            py39haa95532_0
+lifelines                 0.27.1             pyhd8ed1ab_0    conda-forge
+matplotlib-base           3.5.1            py39hd77b12b_1
+notebook                  6.4.12           py39haa95532_0
+numpy                     1.22.3           py39h7a0a035_0
+pandas                    1.4.3            py39hd77b12b_0
+pathlib                   1.0.1              pyhd3eb1b0_1
+pip                       22.1.2           py39haa95532_0
+pycox                     0.2.3                    pypi_0    pypi
+python                    3.9.7                h6244533_1
+pytorch                   1.11.0          py3.9_cuda11.3_cudnn8_0    pytorch
+pytorch-model-summary     0.1.1                      py_0    conda-forge
+scikit-learn              1.0.2            py39hf11a4ad_1
+scikit-survival           0.17.2           py39h2e25243_0    conda-forge
+scipy                     1.7.3            py39h0a974cb_0
+seaborn                   0.11.2                   pypi_0    pypi
+sklearn                   0.0                      pypi_0    pypi
+statsmodels               0.13.2                   pypi_0    pypi
+torchsummary              1.5.1                    pypi_0    pypi
